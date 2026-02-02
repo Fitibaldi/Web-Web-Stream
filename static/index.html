@@ -1,0 +1,133 @@
+<!-- static/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Webcam Recorder</h1>
+
+    <!-- Status Indicator -->
+    <div id="statusIndicator" class="status-indicator hidden">
+        <span class="recording-dot" id="recordingDot" style="display: none;"></span>
+        <span id="statusText"></span>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification"></div>
+
+    <div class="preview-panel">
+        <div class="preview-header" onclick="togglePreview()">
+            <span class="preview-title">Camera Preview</span>
+            <span class="toggle-icon" id="toggleIcon">▼</span>
+        </div>
+        <div class="preview-content" id="previewContent">
+            <img src="http://octopi.local/webcam/?action=stream" width="640"/>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="startRecording()">
+            Start Recording
+        </button>
+
+        <button onclick="stopRecording()">
+            Stop Recording
+        </button>
+    </div>
+
+    <script>
+        function togglePreview() {
+            const content = document.getElementById('previewContent');
+            const icon = document.getElementById('toggleIcon');
+            
+            content.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+        }
+
+        function updateStatus(isRecording) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const recordingDot = document.getElementById('recordingDot');
+            
+            indicator.classList.remove('hidden', 'recording', 'idle');
+            
+            if (isRecording) {
+                indicator.classList.add('recording');
+                statusText.textContent = 'Recording in Progress';
+                recordingDot.style.display = 'block';
+            } else {
+                indicator.classList.add('idle');
+                statusText.textContent = 'Ready';
+                recordingDot.style.display = 'none';
+            }
+        }
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.remove('error');
+            
+            if (isError) {
+                notification.classList.add('error');
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        async function startRecording() {
+            try {
+                const response = await fetch('/record/start', {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.status === 'recording') {
+                    updateStatus(true);
+                    showNotification('Recording started successfully!');
+                } else if (data.status === 'already_recording') {
+                    showNotification('Recording is already in progress', true);
+                }
+            } catch (error) {
+                showNotification('Failed to start recording', true);
+                console.error('Error starting recording:', error);
+            }
+        }
+
+        async function stopRecording() {
+            try {
+                const response = await fetch('/record/stop', {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.status === 'stopped') {
+                    updateStatus(false);
+                    showNotification('Recording saved successfully!');
+                } else if (data.status === 'not_recording') {
+                    showNotification('No active recording to stop', true);
+                } else if (data.status === 'error') {
+                    showNotification('Error stopping recording: ' + data.error, true);
+                }
+            } catch (error) {
+                showNotification('Failed to stop recording', true);
+                console.error('Error stopping recording:', error);
+            }
+        }
+
+        // Check initial status on page load
+        async function checkStatus() {
+            try {
+                const response = await fetch('/record/status');
+                const data = await response.json();
+                updateStatus(data.status === 'recording');
+            } catch (error) {
+                console.error('Error checking status:', error);
+            }
+        }
+
+        // Check status when page loads
+        checkStatus();
+    </script>
+</body>
+</html>
