@@ -3,6 +3,7 @@ import subprocess
 from datetime import datetime
 import os
 import logging
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,6 +19,36 @@ FFMPEG_CMD = [
     "-i", STREAM_URL,
     "-c", "copy",  # Copy stream without re-encoding (faster and more reliable)
 ]
+
+def check_stream_available(timeout=5):
+    """
+    Check if the stream URL is accessible.
+    Returns (True, None) if accessible, (False, error_message) if not.
+    """
+    try:
+        logger.info(f"Checking stream availability at: {STREAM_URL}")
+        response = requests.get(STREAM_URL, timeout=timeout, stream=True)
+
+        if response.status_code == 200:
+            logger.info("Stream is accessible")
+            return True, None
+        else:
+            error_msg = f"Stream returned status code {response.status_code}"
+            logger.warning(error_msg)
+            return False, error_msg
+
+    except requests.exceptions.Timeout:
+        error_msg = "Stream connection timed out"
+        logger.warning(error_msg)
+        return False, error_msg
+    except requests.exceptions.ConnectionError:
+        error_msg = "Cannot connect to stream - check if OctoPi is running and accessible"
+        logger.warning(error_msg)
+        return False, error_msg
+    except Exception as e:
+        error_msg = f"Error checking stream: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
 
 def start_recording():
     date = datetime.now().strftime("%Y-%m-%d")

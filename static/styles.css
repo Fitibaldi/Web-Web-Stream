@@ -51,10 +51,54 @@ body {
     padding: 0 15px;
 }
 
+.preview-content {
+    position: relative;
+}
+
 .preview-content img {
     display: block;
     max-width: 100%;
     height: auto;
+}
+
+.stream-error-overlay {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
+    border: 2px dashed #d32f2f;
+    border-radius: 4px;
+    color: #d32f2f;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+    min-height: 200px;
+}
+
+.stream-error-overlay.hidden {
+    display: none;
+}
+
+.stream-error-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.stream-error-message {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.stream-error-details {
+    font-size: 14px;
+    color: #666;
+    font-weight: normal;
 }
 
 .controls {

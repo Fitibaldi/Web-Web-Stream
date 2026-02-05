@@ -22,7 +22,19 @@
             <span class="toggle-icon" id="toggleIcon">▼</span>
         </div>
         <div class="preview-content" id="previewContent">
-            <img src="http://octopi.local/webcam/?action=stream" width="640"/>
+            <img id="streamImage"
+                 src="http://octopi.local/webcam/?action=stream"
+                 width="640"
+                 onerror="handleStreamError()"
+                 onload="handleStreamLoad()"/>
+            <div id="streamErrorOverlay" class="stream-error-overlay hidden">
+                <div class="stream-error-icon">⚠️</div>
+                <div class="stream-error-message">Stream Not Available</div>
+                <div class="stream-error-details">
+                    Cannot connect to camera stream.<br>
+                    Please check if OctoPi is running and accessible.
+                </div>
+            </div>
         </div>
     </div>
 
@@ -40,9 +52,29 @@
         function togglePreview() {
             const content = document.getElementById('previewContent');
             const icon = document.getElementById('toggleIcon');
-            
+
             content.classList.toggle('collapsed');
             icon.classList.toggle('collapsed');
+        }
+
+        function handleStreamError() {
+            const overlay = document.getElementById('streamErrorOverlay');
+            const image = document.getElementById('streamImage');
+
+            overlay.classList.remove('hidden');
+            image.style.display = 'none';
+
+            console.error('Stream failed to load');
+        }
+
+        function handleStreamLoad() {
+            const overlay = document.getElementById('streamErrorOverlay');
+            const image = document.getElementById('streamImage');
+
+            overlay.classList.add('hidden');
+            image.style.display = 'block';
+
+            console.log('Stream loaded successfully');
         }
 
         function updateStatus(isRecording) {
@@ -83,12 +115,14 @@
             try {
                 const response = await fetch('/record/start', {method: 'POST'});
                 const data = await response.json();
-                
+
                 if (data.status === 'recording') {
                     updateStatus(true);
                     showNotification('Recording started successfully!');
                 } else if (data.status === 'already_recording') {
                     showNotification('Recording is already in progress', true);
+                } else if (data.status === 'stream_unavailable') {
+                    showNotification('Cannot start recording: ' + data.error, true);
                 }
             } catch (error) {
                 showNotification('Failed to start recording', true);

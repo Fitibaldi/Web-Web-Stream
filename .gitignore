@@ -205,3 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Claude Code
+# Local settings and memory should not be pushed to the repository
+.claude/
+
+# Recorded videos
+# Don't push recorded video files to the repository
+videos/

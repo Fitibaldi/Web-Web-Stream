@@ -1,7 +1,7 @@
 # app/main.py
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from app.recorder import start_recording
+from app.recorder import start_recording, check_stream_available
 import subprocess
 import logging
 
@@ -15,6 +15,12 @@ process = None
 def record_start():
     global process
     if process is None or (process.poll() is not None):
+        # Check if stream is available before starting recording
+        stream_available, error_message = check_stream_available()
+        if not stream_available:
+            logging.warning(f"Cannot start recording: {error_message}")
+            return {"status": "stream_unavailable", "error": error_message}
+
         process = start_recording()
         logging.info(f"Started recording (pid={process.pid})")
         return {"status": "recording", "pid": process.pid}
